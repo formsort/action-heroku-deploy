@@ -75,12 +75,12 @@ runs:
       shell: bash
       run: |
         release_id=$(curl -sS "https://api.heroku.com/apps/fs-${{ matrix.app }}-beta/builds/$build_id" \
-          -H "Authorization: Bearer ${{ secrets.HEROKU_DEPLOY_KEY }}" \
+          -H "Authorization: Bearer ${{ inputs.heroku_api_key }}" \
           -H 'Accept: application/vnd.heroku+json; version=3' | jq -r .release.id)
         echo ::set-output name=id::$(echo $release_id)
 
         heroku_release=$(curl -sS "https://api.heroku.com/apps/fs-${{ matrix.app }}-beta/releases/$release_id" \
-          -H "Authorization: Bearer ${{ secrets.HEROKU_DEPLOY_KEY }}" \
+          -H "Authorization: Bearer ${{ inputs.heroku_api_key }}" \
           -H 'Accept: application/vnd.heroku+json; version=3')
         echo ::set-output name=release::$(echo $heroku_release)
     - id: release_logs
