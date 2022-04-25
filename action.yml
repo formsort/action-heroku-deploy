@@ -1,6 +1,9 @@
 name: "Zero-waste Heroku Deploy"
 description: "Deploy to Heroku with a repo tarball"
 inputs:
+  github_repo:
+    description: "GitHub repo name with owner (eg. formsort/formsort)"
+    required: true
   github_token:
     description: "GITHUB_TOKEN"
     required: true
@@ -47,7 +50,7 @@ runs:
       shell: bash
       run: |
         echo ::set-output name=link::$(\n
-          curl -sS "https://api.github.com/repos/formsort/formsort/tarball/${{ inputs.ref }}" \
+          curl -sS "https://api.github.com/repos/${{ inputs.github_repo }}/tarball/${{ inputs.ref }}" \
           -H "Authorization: token ${{ inputs.github_token }}" -D - -o /dev/null | awk -v RS='\r\n' -v OFS='' -F'location: ' '$2 {print $2}' \
         )
     - id: create_build

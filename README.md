@@ -20,6 +20,7 @@ are set accordingly. Then do the following:
 1. Add necessary steps such as build, test, etc.
 1. Add this action as a next step: `formsort/action-heroku-deploy@v1`
 1. Add the following inputs:
+   - `github_repo: ${{ github.repository }}`
    - `github_token: ${{ github.token }}`
    - `heroku_api_key: ${{ secrets.HEROKU_API_KEY }}`
    - `heroku_app_name: <your Heroku app name>`
