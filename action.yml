@@ -16,7 +16,7 @@ inputs:
   ref:
     description: "Git ref to deploy to Heroku"
     required: true
-    default: master
+    default: ""
 outputs:
   source_tarball:
     description: The URL of the source tarball used to create the build
