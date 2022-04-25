@@ -30,7 +30,7 @@ Alternatively you can use a separate `heroku_app_version` to set your Heroku app
 
 ## What
 
-This action creates te build, follows its logs, then follows the release logs triggered by the build. It provides the following outputs:
+This action creates the build, follows its logs, then follows the release logs triggered by the build. It provides the following outputs:
 
 1. `source_tarball`: The link to the source tarball that is sent to Heroku. Note that for private repos, these links will expire after 5 minutes [per GitHub's docs](https://docs.github.com/en/rest/repos/contents#download-a-repository-archive-tar).
 1. `build`: A JSON string that contains the finished build information from the Heroku API
