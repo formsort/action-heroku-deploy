@@ -1,4 +1,4 @@
-name: "Heroku Deploy"
+name: "Zero-waste Heroku Deploy"
 description: "Deploy to Heroku with a repo tarball"
 inputs:
   github_token:
