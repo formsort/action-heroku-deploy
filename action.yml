@@ -50,7 +50,7 @@ runs:
       shell: bash
       run: |
         echo ::set-output name=link::$(\
-          curl -sS 'https://api.github.com/repos/${{ inputs.github_repo }}/tarball/${{ inputs.ref }}'' \
+          curl -sS 'https://api.github.com/repos/${{ inputs.github_repo }}/tarball/${{ inputs.ref }}' \
           -H "Authorization: token ${{ inputs.github_token }}" -D - -o /dev/null | awk -v RS='\r\n' -v OFS='' -F'location: ' '$2 {print $2}' \
         )
     - id: create_build
