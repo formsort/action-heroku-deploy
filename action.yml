@@ -77,12 +77,12 @@ runs:
       name: Get Heroku release
       shell: bash
       run: |
-        release_id=$(curl -fsS 'https://api.heroku.com/apps/fs-${{ matrix.app }}-beta/builds/${{ steps.create_build.outputs.id }}' \
+        release_id=$(curl -fsS 'https://api.heroku.com/apps/fs-${{ inputs.heroku_app_name }}-beta/builds/${{ steps.create_build.outputs.id }}' \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
           -H 'Accept: application/vnd.heroku+json; version=3' | jq -r .release.id)
         echo ::set-output name=id::$(echo $release_id)
 
-        heroku_release=$(curl -fsS "https://api.heroku.com/apps/fs-${{ matrix.app }}-beta/releases/$release_id" \
+        heroku_release=$(curl -fsS "https://api.heroku.com/apps/fs-${{ inputs.heroku_app_name }}-beta/releases/$release_id" \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
           -H 'Accept: application/vnd.heroku+json; version=3')
         echo ::set-output name=release::$(echo $heroku_release)
