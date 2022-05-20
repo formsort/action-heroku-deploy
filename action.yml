@@ -50,6 +50,10 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
+        # Try to determine if the app is part of a pipeline *and* it is in production stage
+        # If the app is NOT part of any pipelines, this endpoint will return 404, causing `curl`
+        # to exit with a failure code (see the `-f` flag) and will fail the rest of the step.
+        # This is why we have `continue-on-error` set to true above.
         pipeline_couplings=$(\
           curl -fsS 'https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/pipeline-couplings' \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
@@ -60,13 +64,18 @@ runs:
         fi
 
         pipeline_id=$(echo "$pipeline_couplings" | jq -r .pipeline.id)
+        # Get all the apps in the pipeline our app is associated with
         all_pipeline_couplings=$(\
           curl -fsS "https://api.heroku.com/pipelines/$pipeline_id/pipeline-couplings" \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
             -H 'Accept: application/vnd.heroku+json; version=3' \
         )
+        # Get the app id for the app designated as "staging" from the pipeline. Remember, we expected the
+        # app we are deploying to be the `production` app and we can only promote to that from `staging`.
         staging_app_id=$(echo "$all_pipeline_couplings" | jq -r '.[] | select(.stage == "staging").app.id')
 
+        # Get the latest builds on pipeline to see if there's a successful build associated with the
+        # staging app we just found above AND the SHA we are trying to deploy for.
         latest_pipeline_builds=$(\
           curl -fsS "https://api.heroku.com/pipelines/$pipeline_id/latest_builds" \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
@@ -77,6 +86,8 @@ runs:
           echo "$latest_pipeline_builds" | \
           jq -r '.[] | select(.app.id == "'"$staging_app_id"'" and .status == "succeeded" and .source_blob.version == "${{ inputs.ref }}").id')
 
+        # IF we have a build on staging with the SHA we are trying to deploy across latest builds,
+        # set the outputs so the next steps will try to promote instead of doing a full build & release
         if [[ -n "$applicable_build_id" ]]; then
           echo "::set-output name=pipeline_id::$pipeline_id"
           echo "::set-output name=source_app_id::$staging_app_id"
