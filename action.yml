@@ -127,7 +127,7 @@ runs:
       run: |
         # Wait till the build finishes
         curl -fsSN $(echo '${{ steps.create_build.outputs.build }}' | jq -cr .output_stream_url) | tee build_log.txt
-        $build_log=$(cat build_log.txt)
+        build_log=$(cat build_log.txt)
         build_log="${build_log//'%'/'%25'}"
         build_log="${build_log//$'\n'/'%0A'}"
         build_log="${build_log//$'\r'/'%0D'}"
