@@ -101,7 +101,8 @@ runs:
       run: |
         echo "::set-output name=link::$(\
           curl -fsS 'https://api.github.com/repos/${{ inputs.github_repo }}/tarball/${{ inputs.ref }}' \
-          -H 'Authorization: token ${{ inputs.github_token }}' -D - -o /dev/null | awk -v RS='\r\n' -v OFS='' -F'location: ' '$2 {print $2}' \
+          -H 'Authorization: token ${{ inputs.github_token }}' -D - -o /dev/null \
+          | awk -v RS='\r\n' -v OFS='' -F'location: ' '$2 {print $2}' \
         )"
     - id: create_build
       name: Create Heroku build
@@ -113,6 +114,7 @@ runs:
           -H 'Content-Type: application/json' \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
           -H 'Accept: application/vnd.heroku+json; version=3' \
+          | jq -rc . \
         )
         echo "::set-output name=build::$heroku_build"
 
@@ -125,7 +127,11 @@ runs:
       run: |
         # Wait till the build finishes
         curl -fsSN $(echo '${{ steps.create_build.outputs.build }}' | jq -cr .output_stream_url) | tee build_log.txt
-        echo "::set-output name=text::$(cat build_log.txt)"
+        $build_log=$(cat build_log.txt)
+        build_log="${build_log//'%'/'%25'}"
+        build_log="${build_log//$'\n'/'%0A'}"
+        build_log="${build_log//$'\r'/'%0D'}"
+        echo "::set-output name=text::$build_log"
     - id: promote
       name: Promote
       if: steps.pipeline_check.outputs.pipeline_id
@@ -136,6 +142,7 @@ runs:
           -H 'Content-Type: application/json' \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
           -H 'Accept: application/vnd.heroku+json; version=3' \
+          | jq -rc . \
         )
         echo "::set-output name=promotion::$heroku_promotion"
 
@@ -149,13 +156,17 @@ runs:
         if [[ -z "$release_id" ]]; then
           release_id=$(curl -fsS 'https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/builds/${{ steps.create_build.outputs.id }}' \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
-            -H 'Accept: application/vnd.heroku+json; version=3' | jq -rc .release.id)
+            -H 'Accept: application/vnd.heroku+json; version=3' \
+            | jq -rc .release.id \
+          )
         fi
         echo "::set-output name=id::$release_id"
 
         heroku_release=$(curl -fsS "https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/releases/$release_id" \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
-          -H 'Accept: application/vnd.heroku+json; version=3')
+          -H 'Accept: application/vnd.heroku+json; version=3' \
+          | jq -rc . \
+        )
         echo "::set-output name=release::$heroku_release"
     - id: release_logs
       name: Heroku release logs
@@ -163,7 +174,11 @@ runs:
       run: |
         # Wait till the release finishes
         curl -fsSN $(echo '${{ steps.get_release.outputs.release }}' | jq -rc .output_stream_url) | tee release_log.txt
-        echo "::set-output name=text::$(cat release_log.txt)"
+        release_log=$(cat release_log.txt)
+        release_log="${release_log//'%'/'%25'}"
+        release_log="${release_log//$'\n'/'%0A'}"
+        release_log="${release_log//$'\r'/'%0D'}"
+        echo "::set-output name=text::$release_log"
 
 branding:
   color: green
