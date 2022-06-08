@@ -59,11 +59,11 @@ runs:
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
             -H 'Accept: application/vnd.heroku+json; version=3' \
         )
-        if [[ $(echo "$pipeline_couplings" | jq -r .stage) != 'production' ]]; then
+        if [[ $(echo "$pipeline_couplings" | jq -rc .stage) != 'production' ]]; then
           exit;
         fi
 
-        pipeline_id=$(echo "$pipeline_couplings" | jq -r .pipeline.id)
+        pipeline_id=$(echo "$pipeline_couplings" | jq -rc .pipeline.id)
         # Get all the apps in the pipeline our app is associated with
         all_pipeline_couplings=$(\
           curl -fsS "https://api.heroku.com/pipelines/$pipeline_id/pipeline-couplings" \
@@ -72,7 +72,7 @@ runs:
         )
         # Get the app id for the app designated as "staging" from the pipeline. Remember, we expected the
         # app we are deploying to be the `production` app and we can only promote to that from `staging`.
-        staging_app_id=$(echo "$all_pipeline_couplings" | jq -r '.[] | select(.stage == "staging").app.id')
+        staging_app_id=$(echo "$all_pipeline_couplings" | jq -rc '.[] | select(.stage == "staging").app.id')
 
         # Get the latest builds on pipeline to see if there's a successful build associated with the
         # staging app we just found above AND the SHA we are trying to deploy for.
@@ -84,14 +84,14 @@ runs:
 
         applicable_build_id=$(\
           echo "$latest_pipeline_builds" | \
-          jq -r '.[] | select(.app.id == "'"$staging_app_id"'" and .status == "succeeded" and .source_blob.version == "${{ inputs.ref }}").id')
+          jq -rc '.[] | select(.app.id == "'"$staging_app_id"'" and .status == "succeeded" and .source_blob.version == "${{ inputs.ref }}").id')
 
         # IF we have a build on staging with the SHA we are trying to deploy across latest builds,
         # set the outputs so the next steps will try to promote instead of doing a full build & release
         if [[ -n "$applicable_build_id" ]]; then
           echo "::set-output name=pipeline_id::$pipeline_id"
           echo "::set-output name=source_app_id::$staging_app_id"
-          target_app_id=$(echo "$pipeline_couplings" | jq -r .app.id)
+          target_app_id=$(echo "$pipeline_couplings" | jq -rc .app.id)
           echo "::set-output name=target_app_id::$target_app_id"
         fi
     - id: source_blob
@@ -116,7 +116,7 @@ runs:
         )
         echo "::set-output name=build::$heroku_build"
 
-        build_id=$(echo "$heroku_build" | jq -r .id)
+        build_id=$(echo "$heroku_build" | jq -rc .id)
         echo "::set-output name=id::$build_id"
     - id: build_logs
       name: Heroku build logs
@@ -124,7 +124,7 @@ runs:
       shell: bash
       run: |
         # Wait till the build finishes
-        curl -fsSN $(echo '${{ steps.create_build.outputs.build }}' | jq -r .output_stream_url) | tee build_log.txt
+        curl -fsSN $(echo '${{ steps.create_build.outputs.build }}' | jq -cr .output_stream_url) | tee build_log.txt
         echo "::set-output name=text::$(cat build_log.txt)"
     - id: promote
       name: Promote
@@ -139,7 +139,7 @@ runs:
         )
         echo "::set-output name=promotion::$heroku_promotion"
 
-        release_id=$(echo "$heroku_promotion" | jq -r .source.release.id)
+        release_id=$(echo "$heroku_promotion" | jq -rc .source.release.id)
         echo "::set-output name=release_id::$release_id"
     - id: get_release
       name: Get Heroku release
@@ -149,7 +149,7 @@ runs:
         if [[ -z "$release_id" ]]; then
           release_id=$(curl -fsS 'https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/builds/${{ steps.create_build.outputs.id }}' \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
-            -H 'Accept: application/vnd.heroku+json; version=3' | jq -r .release.id)
+            -H 'Accept: application/vnd.heroku+json; version=3' | jq -rc .release.id)
         fi
         echo "::set-output name=id::$release_id"
 
@@ -162,7 +162,7 @@ runs:
       shell: bash
       run: |
         # Wait till the release finishes
-        curl -fsSN $(echo '${{ steps.get_release.outputs.release }}' | jq -r .output_stream_url) | tee release_log.txt
+        curl -fsSN $(echo '${{ steps.get_release.outputs.release }}' | jq -rc .output_stream_url) | tee release_log.txt
         echo "::set-output name=text::$(cat release_log.txt)"
 
 branding:
