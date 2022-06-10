@@ -146,20 +146,27 @@ runs:
         )
         echo "::set-output name=promotion::$heroku_promotion"
 
-        release_id=$(echo "$heroku_promotion" | jq -rc .source.release.id)
-        echo "::set-output name=release_id::$release_id"
+        promotion_id=$(echo "$heroku_promotion" | jq -rc .id)
+        echo "::set-output name=promotion_id::$promotion_id"
     - id: get_release
       name: Get Heroku release
       shell: bash
       run: |
-        release_id='${{ steps.promote.outputs.release_id }}'
-        if [[ -z "$release_id" ]]; then
+        promotion_id='${{ steps.promote.outputs.promotion_id }}'
+        if [[ -n "$promotion_id" ]]; then
+          release_id=$(curl -fsS "https://api.heroku.com/pipeline-promotions/$promotion_id/promotion-targets" \
+            -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
+            -H 'Accept: application/vnd.heroku+json; version=3' \
+            | jq -rc '.[0].release.id' \
+          )
+        else
           release_id=$(curl -fsS 'https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/builds/${{ steps.create_build.outputs.id }}' \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
             -H 'Accept: application/vnd.heroku+json; version=3' \
             | jq -rc .release.id \
           )
         fi
+
         echo "::set-output name=id::$release_id"
 
         heroku_release=$(curl -fsS "https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/releases/$release_id" \
