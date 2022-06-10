@@ -138,7 +138,7 @@ runs:
       shell: bash
       run: |
         heroku_promotion=$(curl -fsS -X POST 'https://api.heroku.com/pipeline-promotions' \
-          -d '{"pipeline":{"id":"${{ steps.pipeline_check.outputs.pipeline_id }}", "source":{"app":{"id": "${{ steps.pipeline_check.outputs.source_app_id }}"}}, "targets":[{"app":{"id": "${{ steps.pipeline_check.outputs.target_app_id }}"}}]}}' \
+          -d '{"pipeline":{"id":"${{ steps.pipeline_check.outputs.pipeline_id }}"}, "source":{"app":{"id": "${{ steps.pipeline_check.outputs.source_app_id }}"}}, "targets":[{"app":{"id": "${{ steps.pipeline_check.outputs.target_app_id }}"}}]}' \
           -H 'Content-Type: application/json' \
           -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
           -H 'Accept: application/vnd.heroku+json; version=3' \
