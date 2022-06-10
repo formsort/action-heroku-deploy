@@ -77,7 +77,7 @@ runs:
         # Get the latest builds on pipeline to see if there's a successful build associated with the
         # staging app we just found above AND the SHA we are trying to deploy for.
         latest_pipeline_builds=$(\
-          curl -fsS "https://api.heroku.com/pipelines/$pipeline_id/latest_builds" \
+          curl -fsS "https://api.heroku.com/pipelines/$pipeline_id/latest-builds" \
             -H 'Authorization: Bearer ${{ inputs.heroku_api_key }}' \
             -H 'Accept: application/vnd.heroku+json; version=3' \
         )
