@@ -20,6 +20,10 @@ inputs:
     description: "Git ref to deploy to Heroku"
     required: true
     default: ""
+  only_promotion:
+    description: "Only allow promoting from a pipeline (rather than a direct build)"
+    required: true
+    default: "false"
 outputs:
   source_tarball:
     description: The URL of the source tarball used to create the build
@@ -47,7 +51,7 @@ runs:
   steps:
     - id: pipeline_check
       name: Check if app is part of a pipeline_check
-      continue-on-error: true
+      continue-on-error: ${{ inputs.only_promotion == 'false' }}
       shell: bash
       run: |
         # Try to determine if the app is part of a pipeline *and* it is in production stage
