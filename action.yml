@@ -186,7 +186,7 @@ runs:
       name: Heroku release logs
       shell: bash
       run: |
-        sleep 3; # Give Heroku some time to kick off the release
+        sleep 10; # Give Heroku some time to kick off the release
         # Wait till the release finishes
         curl -fsSN $(echo '${{ steps.get_release.outputs.release }}' | jq -rc .output_stream_url) | tee release_log.txt
         release_log=$(cat release_log.txt)
