@@ -110,7 +110,8 @@ runs:
         )"
     - id: create_build
       name: Create Heroku build
-      if: "!steps.pipeline_check.outputs.pipeline_id"
+      if: >-
+        inputs.only_promotion == 'false' && !steps.pipeline_check.outputs.pipeline_id
       shell: bash
       run: |
         heroku_build=$(curl -fsS -X POST 'https://api.heroku.com/apps/${{ inputs.heroku_app_name }}/builds' \
