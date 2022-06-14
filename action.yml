@@ -100,7 +100,8 @@ runs:
         fi
     - id: source_blob
       name: Get link to source blob
-      if: "!steps.pipeline_check.outputs.pipeline_id"
+      if: >
+        inputs.only_promotion == 'false' && !steps.pipeline_check.outputs.pipeline_id
       shell: bash
       run: |
         echo "::set-output name=link::$(\
@@ -127,7 +128,7 @@ runs:
         echo "::set-output name=id::$build_id"
     - id: build_logs
       name: Heroku build logs
-      if: "!steps.pipeline_check.outputs.pipeline_id"
+      if: steps.create_build.outputs.build
       shell: bash
       run: |
         # Wait till the build finishes
